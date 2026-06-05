@@ -126,4 +126,6 @@ scripts/release.sh v0.2.0
 
 `scripts/prepare-release.sh` updates `pyproject.toml` and `uv.lock`, verifies the release metadata, runs compile/layout/test/lint/format/build checks, commits the version bump, pushes `codex/release-vX.Y.Z`, and opens a PR.
 
+If the committed metadata already matches the tag, as with the initial `v0.1.0` release, there is no version-bump PR to open. In that case the prepare step runs the same checks and exits successfully; run the `Release` workflow directly with that tag.
+
 After the PR merges, `scripts/release.sh` verifies the merged metadata, runs `uv build`, and creates or updates a GitHub Release with the wheel and sdist from `dist/` attached. The same steps are available as manual GitHub Actions workflows: `Prepare Release PR` and `Release`.

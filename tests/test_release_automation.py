@@ -45,3 +45,12 @@ def test_prepare_release_stages_all_release_metadata_files() -> None:
 
     assert 'git diff --quiet -- "${release_metadata_files[@]}"' in script
     assert 'git add "${release_metadata_files[@]}"' in script
+
+
+def test_prepare_release_allows_current_version_release() -> None:
+    script = (REPO_ROOT / "scripts" / "prepare-release.sh").read_text()
+
+    assert "Version metadata already matches $tag; no release PR is needed." in script
+    assert (
+        "Prepared release $tag from $base_branch. Run the Release workflow with tag $tag." in script
+    )
