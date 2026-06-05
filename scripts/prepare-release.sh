@@ -30,6 +30,17 @@ Options:
 USAGE
 }
 
+run_checks() {
+  echo "Running checks..."
+  git ls-files '*.py' -z | xargs -0 python3 -m py_compile
+  python3 scripts/sync_dlt_init_layout.py --check
+  uv lock --check
+  uv run --frozen --extra dev pytest -q
+  uv run --frozen --extra dev ruff check .
+  uv run --frozen --extra dev ruff format --check .
+  uv build
+}
+
 tag=""
 base_branch="master"
 remote="origin"
@@ -165,20 +176,20 @@ fi
 echo "Verifying release metadata..."
 python3 scripts/release_metadata.py verify "$tag"
 
-if [[ "$release_branch_was_prepared" == false ]] \
-  && git diff --quiet -- "${release_metadata_files[@]}"; then
-  echo "No version reference changes found for $tag." >&2
-  exit 1
+metadata_changed=true
+if git diff --quiet -- "${release_metadata_files[@]}"; then
+  metadata_changed=false
 fi
 
-echo "Running checks..."
-git ls-files '*.py' -z | xargs -0 python3 -m py_compile
-python3 scripts/sync_dlt_init_layout.py --check
-uv lock --check
-uv run --frozen --extra dev pytest -q
-uv run --frozen --extra dev ruff check .
-uv run --frozen --extra dev ruff format --check .
-uv build
+if [[ "$release_branch_was_prepared" == false ]] \
+  && [[ "$metadata_changed" == false ]]; then
+  echo "Version metadata already matches $tag; no release PR is needed."
+  run_checks
+  echo "Prepared release $tag from $base_branch. Run the Release workflow with tag $tag."
+  exit 0
+fi
+
+run_checks
 
 if [[ "$release_branch_was_prepared" == false ]]; then
   git add "${release_metadata_files[@]}"
