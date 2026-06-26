@@ -20,7 +20,7 @@ dev = [
     "duckdb>=1.0",
     "pytest>=8.0",
     "responses>=0.25",
-    "ruff>=0.6",
+    "ruff>=0.15.20",
 ]
 
 [project.urls]
