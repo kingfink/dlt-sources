@@ -14,7 +14,11 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 def test_canonical_sources_are_self_contained() -> None:
     package_root = REPO_ROOT / "tailor_made_dlt_sources"
 
-    assert canonical_source_names(REPO_ROOT) == ["git_repo_markdown_files", "strava"]
+    assert canonical_source_names(REPO_ROOT) == [
+        "git_repo_markdown_files",
+        "netlify_forms",
+        "strava",
+    ]
     for source_name in canonical_source_names(REPO_ROOT):
         source_root = package_root / source_name
         assert (source_root / "__init__.py").is_file()
