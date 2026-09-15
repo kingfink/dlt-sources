@@ -23,6 +23,10 @@ Resources are created from the `resource_globs` mapping that you pass to
 
 Files whose stem is `index` are skipped by default.
 
+Frontmatter starts and ends with an unindented line containing only `---` and optional spaces or tabs. Inline triple hyphens in URLs or text, and indented separators inside YAML block scalars, remain part of the field value.
+
+After upgrading a parser fix, reprocess existing files even when their Git timestamps have not changed. An ordinary incremental run skips files behind its cursor, so use the consuming pipeline's backfill or refresh procedure to repair previously loaded frontmatter.
+
 ## Example
 
 ```python
