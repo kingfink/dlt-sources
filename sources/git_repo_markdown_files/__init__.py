@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib
+import re
 import subprocess
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
@@ -275,15 +276,17 @@ def _filesystem_resource():
 
 def _split_frontmatter(content: str) -> tuple[dict[str, Any] | None, str]:
     """Split markdown into parsed frontmatter and body."""
-    if not content.startswith("---"):
+    delimiter = re.compile(r"^---[ \t]*(?=\r?$)", re.MULTILINE)
+    start = delimiter.match(content)
+    if start is None:
         return None, content
 
-    end = content.find("---", 3)
-    if end == -1:
+    end = delimiter.search(content, start.end() + 1)
+    if end is None:
         return None, content
 
-    raw_block = content[3:end].strip("\n")
-    body = content[end + 3 :]
+    raw_block = content[start.end() : end.start()].strip("\r\n")
+    body = content[end.end() :]
 
     try:
         metadata = yaml.safe_load(raw_block)
