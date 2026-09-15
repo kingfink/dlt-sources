@@ -2,15 +2,11 @@
 
 Git repository markdown files dlt source.
 
-This source loads markdown files from a local git repository into one or more
-dlt resources. Each row includes the file path, parsed YAML frontmatter,
-markdown body, git-derived created and modified timestamps, and a stable
-incremental cursor.
+This source loads markdown files from a local git repository into one or more dlt resources. Each row includes the file path, parsed YAML frontmatter, markdown body, git-derived created and modified timestamps, and a stable incremental cursor.
 
 ## Resources
 
-Resources are created from the `resource_globs` mapping that you pass to
-`git_repo_markdown_files_source`.
+Resources are created from the `resource_globs` mapping that you pass to `git_repo_markdown_files_source`.
 
 | Column | Type | Notes |
 |---|---|---|
