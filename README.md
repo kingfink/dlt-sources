@@ -14,9 +14,11 @@ The layout follows [dlt-hub/verified-sources][verified-sources] ([Paradox-Machin
 | Source | Loads |
 |---|---|
 | [`git_repo_markdown_files`][git-repo-markdown-files] | Markdown files from repository globs |
+| [`netlify_forms`][netlify-forms] | Verified Netlify form submissions |
 | [`strava`][strava] | Strava activity summaries and details |
 
 [git-repo-markdown-files]: tailor_made_dlt_sources/git_repo_markdown_files/README.md
+[netlify-forms]: tailor_made_dlt_sources/netlify_forms/README.md
 [strava]: tailor_made_dlt_sources/strava/README.md
 
 ## Install
@@ -66,6 +68,26 @@ pipeline.run(
 )
 ```
 
+## Usage: Netlify Forms
+
+```python
+import dlt
+
+from tailor_made_dlt_sources.netlify_forms import netlify_forms_source
+
+pipeline = dlt.pipeline(
+    pipeline_name="netlify_forms_demo",
+    destination="duckdb",
+    dataset_name="netlify",
+)
+pipeline.run(
+    netlify_forms_source(
+        access_token="...",
+        site_id="...",
+    )
+)
+```
+
 ## Usage: Strava
 
 ```python
@@ -107,6 +129,8 @@ uv run python scripts/sync_dlt_init_layout.py
 The CI `dlt init layout` workflow runs `python3 scripts/sync_dlt_init_layout.py --check` so PRs fail if the generated `sources/` mirror drifts from the canonical package.
 
 ## Development
+
+See [AGENTS.md](AGENTS.md) for repository conventions, Markdown wrapping, generated-source handling, validation, and rollout guidance.
 
 ```bash
 uv sync --extra dev
