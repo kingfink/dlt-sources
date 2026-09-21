@@ -130,6 +130,8 @@ The CI `dlt init layout` workflow runs `python3 scripts/sync_dlt_init_layout.py 
 
 ## Development
 
+See [AGENTS.md](AGENTS.md) for repository conventions, Markdown wrapping, generated-source handling, validation, and rollout guidance.
+
 ```bash
 uv sync --extra dev
 uv run python scripts/sync_dlt_init_layout.py --check
