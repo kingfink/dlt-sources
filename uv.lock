@@ -129,7 +129,7 @@ wheels = [
 
 [[package]]
 name = "dlt"
-version = "1.27.2"
+version = "1.29.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -159,9 +159,9 @@ dependencies = [
     { name = "tzdata" },
     { name = "win-precise-time", marker = "python_full_version < '3.13' and os_name == 'nt'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/da/40/5aab6d1ff64226df39a3e241e31452907e32793e18f87ec99c956ce0ddd0/dlt-1.27.2.tar.gz", hash = "sha256:e9cf70883df0d04a1d40e1dea95d34dee29de978a9500d1d434eae881b5d0279", size = 1070289, upload-time = "2026-05-29T16:33:47.725Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/6b/4e/393ef8cf88219f05a4f0285151148c39222232f7fa53d7627131a272dc04/dlt-1.29.0.tar.gz", hash = "sha256:ebba7f04c20d61fb813ed284184b463492dac741782c0465a00adf752fd3bcc8", size = 1108405, upload-time = "2026-07-13T09:31:06.325Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e8/69/d30f79f9fc1f08268c71c4a17f150429f4d00833f18f51059250c02ee03b/dlt-1.27.2-py3-none-any.whl", hash = "sha256:1c54d394864ca2cf1b042a28dafe393f24afbd60653edffc20dc6b77066cab2a", size = 1347718, upload-time = "2026-05-29T16:33:43.835Z" },
+    { url = "https://files.pythonhosted.org/packages/4f/cd/fec9313e4c13b1775e158516478d63ccaac6978c6a9dda425529183bd54c/dlt-1.29.0-py3-none-any.whl", hash = "sha256:06d45510762fe2ad5ee794ef139f5a2015720b816be1e0872363cb724744194c", size = 1388187, upload-time = "2026-07-13T09:31:03.95Z" },
 ]
 
 [[package]]
@@ -271,14 +271,11 @@ wheels = [
 
 [[package]]
 name = "jsonpath-ng"
-version = "1.7.0"
+version = "1.8.0"
 source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "ply" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/6d/86/08646239a313f895186ff0a4573452038eed8c86f54380b3ebac34d32fb2/jsonpath-ng-1.7.0.tar.gz", hash = "sha256:f6f5f7fd4e5ff79c785f1573b394043b39849fb2bb47bcead935d12b00beab3c", size = 37838, upload-time = "2024-10-11T15:41:42.404Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/32/58/250751940d75c8019659e15482d548a4aa3b6ce122c515102a4bfdac50e3/jsonpath_ng-1.8.0.tar.gz", hash = "sha256:54252968134b5e549ea5b872f1df1168bd7defe1a52fed5a358c194e1943ddc3", size = 74513, upload-time = "2026-02-24T14:42:06.182Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/35/5a/73ecb3d82f8615f32ccdadeb9356726d6cae3a4bbc840b437ceb95708063/jsonpath_ng-1.7.0-py3-none-any.whl", hash = "sha256:f3d7f9e848cba1b6da28c55b1c26ff915dc9e0b1ba7e752a53d6da8d5cbd00b6", size = 30105, upload-time = "2024-11-20T17:58:30.418Z" },
+    { url = "https://files.pythonhosted.org/packages/03/99/33c7d78a3fb70d545fd5411ac67a651c81602cc09c9cf0df383733f068c5/jsonpath_ng-1.8.0-py3-none-any.whl", hash = "sha256:b8dde192f8af58d646fc031fac9c99fe4d00326afc4148f1f043c601a8cfe138", size = 67844, upload-time = "2026-02-28T00:53:19.637Z" },
 ]
 
 [[package]]
@@ -458,15 +455,6 @@ wheels = [
 ]
 
 [[package]]
-name = "ply"
-version = "3.11"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/e5/69/882ee5c9d017149285cab114ebeab373308ef0f874fcdac9beb90e0ac4da/ply-3.11.tar.gz", hash = "sha256:00c7c1aaa88358b9c765b6d3000c6eec0ba42abca5351b095321aef446081da3", size = 159130, upload-time = "2018-02-15T19:01:31.097Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/a3/58/35da89ee790598a0700ea49b2a66594140f44dec458c07e8e3d4979137fc/ply-3.11-py2.py3-none-any.whl", hash = "sha256:096f9b8350b65ebd2fd1346b12452efe5b9607f7482813ffca50c22722a807ce", size = 49567, upload-time = "2018-02-15T19:01:27.172Z" },
-]
-
-[[package]]
 name = "pygments"
 version = "2.20.0"
 source = { registry = "https://pypi.org/simple" }
@@ -618,16 +606,16 @@ wheels = [
 
 [[package]]
 name = "responses"
-version = "0.26.1"
+version = "0.26.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pyyaml" },
     { name = "requests" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c2/58/1fb6de3503428196df78638f991ec8095274f1ee9723e272ee4d9ff0092b/responses-0.26.1.tar.gz", hash = "sha256:2eb3218553cc8f79b57d257bac23af5e1bf381f5b9390b1767816f0843e01dc2", size = 83088, upload-time = "2026-05-21T19:56:39.747Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f0/1a/4af3e6d659394b809838490b144e4ab8d7ed3b9fecc7ca78f5d2f79b1a3d/responses-0.26.2.tar.gz", hash = "sha256:9c9259b46a8349197edebf43cfa68a87e1a2802ef503ff8b2fecbabc0b45afd8", size = 84030, upload-time = "2026-07-03T16:44:50.325Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3a/31/6a620b4427d546b9e7cca8b3b8c5f0559d9cef2bb9eedcda7f73c1473c19/responses-0.26.1-py3-none-any.whl", hash = "sha256:8aacc4586eb08fb2208ef64a9eb4258d9b0c6e6f4260845f2f018ab847495345", size = 35502, upload-time = "2026-05-21T19:56:38.046Z" },
+    { url = "https://files.pythonhosted.org/packages/7c/28/693e1d9ebf72baa062ded80d837a035b86ce75eda5a269379e9e2b1008a8/responses-0.26.2-py3-none-any.whl", hash = "sha256:6fdfeabd58e5ec473b98dfe02e6d46d3173bd8dd573eff2ccccf1a05a5135364", size = 35609, upload-time = "2026-07-03T16:44:49.1Z" },
 ]
 
 [[package]]
@@ -809,12 +797,12 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "dlt", specifier = ">=1.5,<2" },
+    { name = "dlt", specifier = ">=1.29.0,<2" },
     { name = "duckdb", marker = "extra == 'dev'", specifier = ">=1.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.1.1" },
     { name = "pyyaml", specifier = ">=6.0" },
     { name = "requests", specifier = ">=2.32" },
-    { name = "responses", marker = "extra == 'dev'", specifier = ">=0.25" },
+    { name = "responses", marker = "extra == 'dev'", specifier = ">=0.26.2" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.15.22" },
 ]
 provides-extras = ["dev"]
