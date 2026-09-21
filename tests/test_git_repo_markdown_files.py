@@ -14,6 +14,7 @@ from tailor_made_dlt_sources.git_repo_markdown_files import (
     build_markdown_row,
     build_resource_rows,
     git_repo_markdown_files_source,
+    parse_markdown_document,
     read_markdown_document,
 )
 
@@ -33,6 +34,58 @@ def test_read_markdown_document_returns_frontmatter_and_body(tmp_path: Path) -> 
         "tags": ["SQL"],
     }
     assert document.content == "\nBody\n"
+
+
+@pytest.mark.parametrize("newline", ["\n", "\r\n"])
+@pytest.mark.parametrize("delimiter", ["---", "--- \t"])
+def test_frontmatter_delimiters_must_occupy_the_whole_line(newline: str, delimiter: str) -> None:
+    content = newline.join(
+        [
+            delimiter,
+            "url: https://example.com/US-Remote---Analytics-Engineer",
+            "description: |",
+            "  A role --- with details.",
+            "  ---",
+            "salary_min: 100000",
+            "salary_max: 150000",
+            "salary_unit_inferred: YEAR",
+            "salary_source: salary",
+            delimiter,
+            "Body --- stays intact",
+            "---",
+            "More body",
+        ]
+    )
+
+    document = parse_markdown_document(content)
+
+    assert document.frontmatter == {
+        "url": "https://example.com/US-Remote---Analytics-Engineer",
+        "description": "A role --- with details.\n---\n",
+        "salary_min": 100000,
+        "salary_max": 150000,
+        "salary_unit_inferred": "YEAR",
+        "salary_source": "salary",
+    }
+    assert document.content == newline.join(["", "Body --- stays intact", "---", "More body"])
+
+
+@pytest.mark.parametrize(
+    "content",
+    ["---not a delimiter\ntitle: Job\n---\nBody", "---\nurl: https://example.com/a---b\n"],
+)
+def test_missing_delimiter_leaves_document_intact(content: str) -> None:
+    document = parse_markdown_document(content)
+
+    assert document.frontmatter == {}
+    assert document.content == content
+
+
+def test_frontmatter_can_end_at_eof() -> None:
+    document = parse_markdown_document("---\ntitle: Job\n---")
+
+    assert document.frontmatter == {"title": "Job"}
+    assert document.content == ""
 
 
 def test_git_timestamp_resolver_uses_oldest_and_newest_history_entries(tmp_path: Path) -> None:

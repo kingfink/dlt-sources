@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "tailor-made-dlt-sources"
-version = "0.2.0"
+version = "0.3.0"
 description = "Reusable dlt sources for personal data pipelines."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -20,7 +20,7 @@ dev = [
     "duckdb>=1.0",
     "pytest>=8.0",
     "responses>=0.26.2",
-    "ruff>=0.6",
+    "ruff>=0.15.22",
 ]
 
 [project.urls]
