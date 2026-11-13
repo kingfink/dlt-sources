@@ -140,12 +140,12 @@ def resend_source(
     _validate_options(page_size, request_interval)
 
     @dlt.resource(
-        name="resend_broadcasts",
+        name="broadcasts",
         primary_key="broadcast_id",
         write_disposition="merge",
         columns=BROADCAST_COLUMNS,
     )
-    def resend_broadcasts():
+    def broadcasts():
         yield from fetch_resend_broadcasts(
             api_key=api_key,
             sent_only=sent_only,
@@ -153,4 +153,4 @@ def resend_source(
             request_interval=request_interval,
         )
 
-    return resend_broadcasts()
+    return broadcasts()

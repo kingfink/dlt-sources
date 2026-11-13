@@ -250,7 +250,7 @@ def test_source_can_be_constructed_without_network_and_resolves_secret(monkeypat
     with responses.RequestsMock() as rsps:
         source = resend_source()
         assert source.name == "resend"
-        assert list(source.resources.selected) == ["resend_broadcasts"]
+        assert list(source.resources.selected) == ["broadcasts"]
         assert len(rsps.calls) == 0
         _page(rsps, [])
         assert list(source) == []
@@ -291,11 +291,11 @@ def test_merge_backfills_updates_adds_and_retains_absent_broadcasts(tmp_path, mo
 
     with pipeline.sql_client() as client:
         assert client.execute_sql(
-            "SELECT broadcast_id, COUNT(*) FROM resend_broadcasts GROUP BY 1 ORDER BY 1"
+            "SELECT broadcast_id, COUNT(*) FROM broadcasts GROUP BY 1 ORDER BY 1"
         ) == [("broadcast-1", 1), ("new", 1), ("old-draft", 1), ("retained", 1)]
         rows = client.execute_sql(
             "SELECT id, subject, html, text, reply_to, loaded_ts, sent_at "
-            "FROM resend_broadcasts WHERE broadcast_id = 'broadcast-1'"
+            "FROM broadcasts WHERE broadcast_id = 'broadcast-1'"
         )
         [(original_id, subject, html, text, reply_to, loaded_ts, sent_at)] = rows
         assert original_id == "broadcast-1"
@@ -306,7 +306,7 @@ def test_merge_backfills_updates_adds_and_retains_absent_broadcasts(tmp_path, mo
         assert before <= loaded_ts <= datetime.now(UTC)
         assert sent_at.isoformat() == "2026-11-01T19:32:22.980000+00:00"
         assert client.execute_sql(
-            "SELECT html, text FROM resend_broadcasts WHERE broadcast_id = 'retained'"
+            "SELECT html, text FROM broadcasts WHERE broadcast_id = 'retained'"
         ) == [(_detail()["html"], None)]
         names = {
             row[0]
@@ -315,7 +315,7 @@ def test_merge_backfills_updates_adds_and_retains_absent_broadcasts(tmp_path, mo
                 "WHERE table_schema = 'resend_test'"
             )
         }
-        assert not any(name.startswith("resend_broadcasts__") for name in names)
+        assert not any(name.startswith("broadcasts__") for name in names)
 
 
 def test_failed_later_page_can_be_rerun_without_losing_or_duplicating_rows(tmp_path, monkeypatch):
@@ -344,5 +344,5 @@ def test_failed_later_page_can_be_rerun_without_losing_or_duplicating_rows(tmp_p
 
     with pipeline.sql_client() as client:
         assert client.execute_sql(
-            "SELECT broadcast_id, COUNT(*) FROM resend_broadcasts GROUP BY 1 ORDER BY 1"
+            "SELECT broadcast_id, COUNT(*) FROM broadcasts GROUP BY 1 ORDER BY 1"
         ) == [("broadcast-1", 1), ("broadcast-2", 1)]
