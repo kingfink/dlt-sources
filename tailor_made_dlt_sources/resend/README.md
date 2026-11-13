@@ -1,56 +1,40 @@
 # resend
 
-Resend broadcast metadata and content from the [list](https://resend.com/docs/api-reference/broadcasts/list-broadcasts) and [detail](https://resend.com/docs/api-reference/broadcasts/get-broadcast) endpoints.
+Resend dlt source for broadcast metadata, HTML, and plain text. See the repository [installation guide](https://github.com/kingfink/dlt-sources#install) for package and `dlt init` usage.
 
-## Resource and schema
+## Resources
 
-| Resource | Primary key | Write disposition | Default selection |
+| Resource | Primary key | Write disposition | Notes |
 |---|---|---|---|
-| `broadcasts` | `broadcast_id` | merge | `status = "sent"` |
+| `broadcasts` | `broadcast_id` | merge | Sent broadcasts by default |
 
-API fields pass through, with detail values taking precedence over summaries. `broadcast_id` aliases the original `id`; `loaded_ts` records the UTC fetch time. Additional fields are inferred by dlt, and nested values remain JSON in the same row.
+Every run paginates the [broadcast list](https://resend.com/docs/api-reference/broadcasts/list-broadcasts) and fetches each selected broadcast's [details](https://resend.com/docs/api-reference/broadcasts/get-broadcast). There is no persistent cursor: full rescans capture older drafts that become sent and update existing content. Merge prevents duplicates and retains records deleted upstream. Backfills cover only available API history.
 
-| Column | Type | Meaning |
+| Column | Type | Notes |
 |---|---|---|
-| `broadcast_id`, `id` | text, non-null | Resend broadcast identifier |
-| `object`, `name`, `status` | text | Object type, name, and status |
+| `broadcast_id`, `id` | text | Same Resend identifier; non-null |
+| `object`, `name`, `status` | text | Object type, name, status |
 | `audience_id`, `segment_id`, `topic_id` | text | Targeting identifiers |
-| `from`, `subject`, `preview_text` | text | Sender, subject, and preview |
-| `html`, `text` | text | Original bodies, including whitespace and template placeholders |
+| `from`, `subject`, `preview_text` | text | Sender, subject, preview |
+| `html`, `text` | text | Unmodified bodies; nullable |
 | `reply_to` | JSON | Reply addresses |
-| `created_at`, `scheduled_at`, `sent_at` | timestamp | Source creation, scheduled send, and send times |
-| `loaded_ts` | timestamp, non-null | Extraction time, separate from source event times |
+| `created_at`, `scheduled_at`, `sent_at` | timestamp | Source creation and send times |
+| `loaded_ts` | timestamp | UTC fetch time; non-null |
 
-Fields are nullable unless marked otherwise. Bodies are preserved without rendering or generating text. Null and empty bodies are accepted; a detail response missing both body fields fails extraction.
+Fields are nullable unless marked otherwise. Additional API fields pass through, detail values override summaries, and nested values remain JSON. Null or empty bodies are preserved; responses missing both body fields fail extraction.
 
-## Pagination, reruns, and retention
+Set `sent_only=False` to include all statuses. `page_size` defaults to 100 (range 1–100); `request_interval` defaults to 0.5 seconds between calls. Requests time out after 30 seconds and retry transient failures up to five attempts; unrecoverable failures stop extraction.
 
-Every run follows `limit`/`after` pagination through all available broadcasts and fetches details for each selected broadcast. The first run backfills available content; reruns merge by `broadcast_id`, updating existing rows and adding new ones. There is no persistent cursor: full rescans capture older drafts that become sent and refresh existing content.
+## Auth
 
-Repeated IDs are fetched once per run. Records deleted or no longer selected upstream remain in the destination. Backfills can only recover content still available through the API.
-
-Requests are sequential, with a 30-second timeout. Connection failures, timeouts, HTTP 429, and HTTP 5xx get up to five attempts with exponential backoff or `Retry-After`, capped at 60 seconds. Unrecoverable errors and invalid responses or pagination fail extraction; rerun the load after resolving the failure. Adjust `request_interval` for Resend's shared [rate limits](https://resend.com/docs/api-reference/rate-limit).
-
-## Authentication and options
-
-Configure a [`full_access`](https://resend.com/docs/api-reference/api-keys/create-api-key) API key in `.dlt/secrets.toml`. The source only makes GET requests.
+Configure a [`full_access`](https://resend.com/docs/api-reference/api-keys/create-api-key) API key in `.dlt/secrets.toml`, or set `SOURCES__RESEND__API_KEY`:
 
 ```toml
 [sources.resend]
 api_key = "re_..."
 ```
 
-Alternatively set `SOURCES__RESEND__API_KEY` or pass `api_key` explicitly.
-
-| Argument | Default | Behavior |
-|---|---|---|
-| `sent_only` | `True` | Set to `False` to include all statuses |
-| `page_size` | `100` | Summaries per request, from 1 to 100 |
-| `request_interval` | `0.5` | Non-negative delay in seconds between calls |
-
-## Usage
-
-After installing a release containing this source:
+## Example
 
 ```python
 import dlt
@@ -62,14 +46,6 @@ pipeline = dlt.pipeline(
     destination="duckdb",
     dataset_name="resend",
 )
-print(pipeline.run(resend_source()))
+info = pipeline.run(resend_source())
+print(info)
 ```
-
-For a standalone copy, replace `RELEASE_TAG` with a release containing this source:
-
-```bash
-dlt init resend duckdb --location https://github.com/kingfink/dlt-sources --branch RELEASE_TAG
-python resend_pipeline.py
-```
-
-Consumers own scheduling, destinations, and warehouse models. Pin the package release and update the lockfile before deployment. Then backfill and verify IDs, counts, and bodies against the API; validate any webhook joins on `broadcast_id`. Releasing the package does not deploy consumers or load data.

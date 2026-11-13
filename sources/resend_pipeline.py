@@ -24,7 +24,8 @@ def main() -> None:
         destination="duckdb",
         dataset_name="resend",
     )
-    print(pipeline.run(resend_source()))
+    info = pipeline.run(resend_source())
+    print(info)
 
 
 if __name__ == "__main__":

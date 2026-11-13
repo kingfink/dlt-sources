@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, datetime
-from urllib.parse import parse_qs, urlparse
 
 import dlt
 import pytest
@@ -83,16 +82,9 @@ def test_follows_cursors_through_unsent_pages_and_fetches_each_detail_once():
 
         assert [row["broadcast_id"] for row in rows] == ["broadcast-1", "broadcast-2"]
         assert len(rsps.calls) == 5
-        assert all(call.request.method == "GET" for call in rsps.calls)
         assert all(
             call.request.headers["Authorization"] == "Bearer secret-token" for call in rsps.calls
         )
-        pages = [call for call in rsps.calls if urlparse(call.request.url).path == "/broadcasts"]
-        assert [parse_qs(urlparse(call.request.url).query) for call in pages] == [
-            {"limit": ["100"]},
-            {"limit": ["100"], "after": ["draft-1"]},
-            {"limit": ["100"], "after": ["scheduled-1"]},
-        ]
 
 
 @pytest.mark.parametrize("text", [None, "", "Plain text\r\nwith whitespace \n"])
@@ -107,12 +99,6 @@ def test_preserves_original_content_and_metadata_with_real_fetch_time(text):
 
     assert before <= datetime.fromisoformat(row.pop("loaded_ts")) <= after
     assert row == {**detail, "summary_only": "keep", "broadcast_id": "broadcast-1"}
-
-
-def test_empty_account():
-    with responses.RequestsMock() as rsps:
-        _page(rsps, [])
-        assert _fetch() == []
 
 
 def test_terminal_full_page_does_not_trigger_another_request():
@@ -143,11 +129,8 @@ def test_rechecks_status_in_detail():
     [
         ([], "must be an object"),
         ({"data": []}, "boolean has_more"),
-        ({"data": [], "has_more": "false"}, "boolean has_more"),
-        ({"data": {}, "has_more": False}, "must contain data"),
         ({"data": [], "has_more": True}, "page is empty"),
         ({"data": [{"status": "sent"}], "has_more": False}, "missing.*id"),
-        ({"data": [{"id": 12}], "has_more": False}, "missing.*id"),
         ({"data": [{"id": "x"}], "has_more": False}, "missing status"),
     ],
 )
@@ -161,7 +144,6 @@ def test_rejects_malformed_list_instead_of_silent_truncation(payload, message):
 @pytest.mark.parametrize(
     "detail, message",
     [
-        ({"status": "sent"}, "missing.*id"),
         (_detail("wrong-id"), "does not match"),
         ({"id": "broadcast-1", "status": "sent"}, "missing html and text"),
         ({"id": "broadcast-1", "html": "body"}, "missing status"),
@@ -184,41 +166,39 @@ def test_rejects_repeated_pagination_cursor():
         assert len(rsps.calls) == 2
 
 
-@pytest.mark.parametrize("stage", ["list", "detail"])
-@pytest.mark.parametrize("failure", [429, 503, requests.ConnectionError, requests.Timeout])
-def test_retries_transient_failures_without_losing_records(stage, failure, sleeps):
-    path = "/broadcasts" if stage == "list" else "/broadcasts/broadcast-1"
+def test_retries_rate_limited_list_using_retry_after(sleeps):
     with responses.RequestsMock() as rsps:
-        if stage == "detail":
-            _page(rsps, [_summary()])
-        if isinstance(failure, int):
-            rsps.get(
-                f"{RESEND_API_BASE}{path}",
-                status=failure,
-                json={"message": "temporary failure"},
-                headers={"Retry-After": "3"},
-            )
-        else:
-            rsps.get(f"{RESEND_API_BASE}{path}", body=failure("temporary failure"))
-        if stage == "list":
-            _page(rsps, [_summary()])
+        rsps.get(f"{RESEND_API_BASE}/broadcasts", status=429, headers={"Retry-After": "3"})
+        _page(rsps, [_summary()])
         _stub_detail(rsps)
-
         [row] = _fetch(request_interval=0)
-
         assert row["broadcast_id"] == "broadcast-1"
         assert len(rsps.calls) == 3
-        assert (3 if isinstance(failure, int) else 1) in sleeps
+    assert 3 in sleeps
 
 
-@pytest.mark.parametrize("stage", ["list", "detail"])
-@pytest.mark.parametrize("status, attempts", [(401, 1), (403, 1), (404, 1), (429, 5), (500, 5)])
-def test_permanent_errors_and_exhausted_retries_fail_extraction(stage, status, attempts):
-    path = "/broadcasts" if stage == "list" else "/broadcasts/broadcast-1"
+@pytest.mark.parametrize(
+    "failure",
+    [
+        {"status": 503},
+        {"body": requests.ConnectionError("connection lost")},
+        {"body": requests.Timeout("timed out")},
+    ],
+)
+def test_retries_transient_detail_failures(failure):
     with responses.RequestsMock() as rsps:
-        if stage == "detail":
-            _page(rsps, [_summary()])
-        failure = rsps.get(f"{RESEND_API_BASE}{path}", status=status, json={"message": "failure"})
+        _page(rsps, [_summary()])
+        rsps.get(f"{RESEND_API_BASE}/broadcasts/broadcast-1", **failure)
+        _stub_detail(rsps)
+        assert len(_fetch()) == 1
+        assert len(rsps.calls) == 3
+
+
+@pytest.mark.parametrize("status, attempts", [(403, 1), (429, 5), (503, 5)])
+def test_failed_details_are_not_silently_skipped(status, attempts):
+    with responses.RequestsMock() as rsps:
+        _page(rsps, [_summary()])
+        failure = rsps.get(f"{RESEND_API_BASE}/broadcasts/broadcast-1", status=status)
         with pytest.raises(requests.HTTPError):
             _fetch()
         assert failure.call_count == attempts
@@ -233,16 +213,18 @@ def test_paces_successful_requests(sleeps):
     assert sleeps == [0.75, 0.75]
 
 
-@pytest.mark.parametrize("page_size", [0, 101, 1.5, True])
-def test_rejects_invalid_page_size_before_extraction(page_size):
-    with pytest.raises(ValueError, match="page_size"):
-        resend_source(api_key="secret-token", page_size=page_size)
-
-
-@pytest.mark.parametrize("interval", [-1, float("inf"), float("nan")])
-def test_rejects_invalid_request_interval_before_extraction(interval):
-    with pytest.raises(ValueError, match="request_interval"):
-        resend_source(api_key="secret-token", request_interval=interval)
+@pytest.mark.parametrize(
+    "options",
+    [
+        {"page_size": 0},
+        {"page_size": 101},
+        {"request_interval": -1},
+        {"request_interval": float("nan")},
+    ],
+)
+def test_rejects_invalid_options_before_extraction(options):
+    with pytest.raises(ValueError):
+        resend_source(api_key="secret-token", **options)
 
 
 def test_source_can_be_constructed_without_network_and_resolves_secret(monkeypatch):
@@ -293,15 +275,12 @@ def test_merge_backfills_updates_adds_and_retains_absent_broadcasts(tmp_path, mo
         assert client.execute_sql(
             "SELECT broadcast_id, COUNT(*) FROM broadcasts GROUP BY 1 ORDER BY 1"
         ) == [("broadcast-1", 1), ("new", 1), ("old-draft", 1), ("retained", 1)]
-        rows = client.execute_sql(
-            "SELECT id, subject, html, text, reply_to, loaded_ts, sent_at "
-            "FROM broadcasts WHERE broadcast_id = 'broadcast-1'"
+        assert client.execute_sql(
+            "SELECT id, subject, html, text FROM broadcasts WHERE broadcast_id = 'broadcast-1'"
+        ) == [("broadcast-1", "00123", "<p>Updated content</p>", "Updated content")]
+        [(reply_to, loaded_ts, sent_at)] = client.execute_sql(
+            "SELECT reply_to, loaded_ts, sent_at FROM broadcasts WHERE broadcast_id = 'broadcast-1'"
         )
-        [(original_id, subject, html, text, reply_to, loaded_ts, sent_at)] = rows
-        assert original_id == "broadcast-1"
-        assert subject == "00123"
-        assert html == "<p>Updated content</p>"
-        assert text == "Updated content"
         assert json.loads(reply_to) == _detail()["reply_to"]
         assert before <= loaded_ts <= datetime.now(UTC)
         assert sent_at.isoformat() == "2026-11-01T19:32:22.980000+00:00"

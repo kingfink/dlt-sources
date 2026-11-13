@@ -16,22 +16,17 @@ RESEND_API_BASE = "https://api.resend.com"
 BROADCAST_COLUMNS = {
     "broadcast_id": {"data_type": "text", "nullable": False},
     "id": {"data_type": "text", "nullable": False},
-    **{
-        field: {"data_type": "text"}
-        for field in (
-            "object",
-            "name",
-            "audience_id",
-            "segment_id",
-            "topic_id",
-            "from",
-            "subject",
-            "preview_text",
-            "html",
-            "text",
-            "status",
-        )
-    },
+    "object": {"data_type": "text"},
+    "name": {"data_type": "text"},
+    "audience_id": {"data_type": "text"},
+    "segment_id": {"data_type": "text"},
+    "topic_id": {"data_type": "text"},
+    "from": {"data_type": "text"},
+    "subject": {"data_type": "text"},
+    "preview_text": {"data_type": "text"},
+    "html": {"data_type": "text"},
+    "text": {"data_type": "text"},
+    "status": {"data_type": "text"},
     "reply_to": {"data_type": "json"},
     "created_at": {"data_type": "timestamp"},
     "scheduled_at": {"data_type": "timestamp"},
@@ -47,9 +42,11 @@ def _validate_options(page_size: int, request_interval: float) -> None:
         raise ValueError("request_interval must be finite and non-negative")
 
 
-def _broadcast_id(record: dict) -> str:
+def _validate_broadcast(record: dict) -> str:
     if not isinstance(record, dict) or not isinstance(record.get("id"), str) or not record["id"]:
         raise ValueError("Resend broadcast is missing a non-empty string id")
+    if not isinstance(record.get("status"), str):
+        raise ValueError("Resend broadcast is missing status")
     return record["id"]
 
 
@@ -60,7 +57,7 @@ def fetch_resend_broadcasts(
     page_size: int = 100,
     request_interval: float = 0.5,
 ) -> Iterator[dict]:
-    """Fetch all available broadcast pages and the full detail of each selected broadcast."""
+    """Fetch all broadcast pages and details, preserving the original API fields."""
     _validate_options(page_size, request_interval)
     client = Client(
         request_timeout=30,
@@ -97,16 +94,12 @@ def fetch_resend_broadcasts(
                 raise ValueError("Resend pagination has_more is true but the page is empty")
 
             for summary in batch:
-                broadcast_id = _broadcast_id(summary)
-                if not isinstance(summary.get("status"), str):
-                    raise ValueError("Resend broadcast summary is missing status")
+                broadcast_id = _validate_broadcast(summary)
                 if broadcast_id in seen_ids or (sent_only and summary["status"] != "sent"):
                     continue
                 detail = get(f"/broadcasts/{quote(broadcast_id, safe='')}")
-                if _broadcast_id(detail) != broadcast_id:
+                if _validate_broadcast(detail) != broadcast_id:
                     raise ValueError("Resend broadcast detail id does not match the requested id")
-                if not isinstance(detail.get("status"), str):
-                    raise ValueError("Resend broadcast detail is missing status")
                 if not any(field in detail for field in ("html", "text")):
                     raise ValueError("Resend broadcast detail is missing html and text fields")
                 seen_ids.add(broadcast_id)
@@ -122,7 +115,7 @@ def fetch_resend_broadcasts(
             if not has_more:
                 return
             # Advance using the final summary, even when every item on this page was skipped.
-            cursor = _broadcast_id(batch[-1])
+            cursor = batch[-1]["id"]
             if cursor in cursors:
                 raise ValueError("Resend pagination cursor did not advance")
             cursors.add(cursor)
@@ -136,7 +129,7 @@ def resend_source(
     page_size: int = 100,
     request_interval: float = 0.5,
 ):
-    """Merge broadcast content by broadcast_id; sent broadcasts are selected by default."""
+    """Return broadcast content, selecting sent broadcasts by default."""
     _validate_options(page_size, request_interval)
 
     @dlt.resource(
