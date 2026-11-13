@@ -17,6 +17,7 @@ def test_canonical_sources_are_self_contained() -> None:
     assert canonical_source_names(REPO_ROOT) == [
         "git_repo_markdown_files",
         "netlify_forms",
+        "resend",
         "strava",
     ]
     for source_name in canonical_source_names(REPO_ROOT):

@@ -15,10 +15,12 @@ The layout follows [dlt-hub/verified-sources][verified-sources] ([Paradox-Machin
 |---|---|
 | [`git_repo_markdown_files`][git-repo-markdown-files] | Markdown files from repository globs |
 | [`netlify_forms`][netlify-forms] | Verified Netlify form submissions |
+| [`resend`][resend] | Resend broadcast metadata, subjects, HTML, and plain text |
 | [`strava`][strava] | Strava activity summaries and details |
 
 [git-repo-markdown-files]: tailor_made_dlt_sources/git_repo_markdown_files/README.md
 [netlify-forms]: tailor_made_dlt_sources/netlify_forms/README.md
+[resend]: tailor_made_dlt_sources/resend/README.md
 [strava]: tailor_made_dlt_sources/strava/README.md
 
 ## Install
