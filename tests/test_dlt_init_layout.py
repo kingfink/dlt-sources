@@ -16,6 +16,7 @@ def test_canonical_sources_are_self_contained() -> None:
 
     assert canonical_source_names(REPO_ROOT) == [
         "git_repo_markdown_files",
+        "google_search_console_url_inspection",
         "netlify_forms",
         "resend",
         "strava",
