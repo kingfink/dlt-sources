@@ -14,11 +14,13 @@ The layout follows [dlt-hub/verified-sources][verified-sources] ([Paradox-Machin
 | Source | Loads |
 |---|---|
 | [`git_repo_markdown_files`][git-repo-markdown-files] | Markdown files from repository globs |
+| [`google_search_console_url_inspection`][google-search-console-url-inspection] | Google Search Console per-URL indexing inspections |
 | [`netlify_forms`][netlify-forms] | Verified Netlify form submissions |
 | [`resend`][resend] | Resend broadcast metadata, subjects, HTML, and plain text |
 | [`strava`][strava] | Strava activity summaries and details |
 
 [git-repo-markdown-files]: tailor_made_dlt_sources/git_repo_markdown_files/README.md
+[google-search-console-url-inspection]: tailor_made_dlt_sources/google_search_console_url_inspection/README.md
 [netlify-forms]: tailor_made_dlt_sources/netlify_forms/README.md
 [resend]: tailor_made_dlt_sources/resend/README.md
 [strava]: tailor_made_dlt_sources/strava/README.md
@@ -88,6 +90,39 @@ pipeline.run(
         site_id="...",
     )
 )
+```
+
+## Usage: Google Search Console URL Inspection
+
+```python
+import dlt
+from datetime import date
+
+from tailor_made_dlt_sources.google_search_console_url_inspection import (
+    google_search_console_url_inspection_source,
+)
+
+pipeline = dlt.pipeline(
+    pipeline_name="google_search_console_url_inspection_demo",
+    destination="duckdb",
+    dataset_name="google_search_console_url_inspection",
+)
+pipeline.run(
+    google_search_console_url_inspection_source(
+        site_url="https://example.com/",
+        urls=["https://example.com/", "https://example.com/about"],
+        snapshot_date=date(2024, 1, 1),
+    )
+)
+```
+
+Configure Google OAuth2 credentials using dlt secrets:
+
+```toml
+[sources.google_search_console_url_inspection]
+client_id = "..."
+client_secret = "..."
+refresh_token = "..."
 ```
 
 ## Usage: Strava
